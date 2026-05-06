@@ -36,7 +36,7 @@ namespace WindowsGSM.Plugins
         // - Game server Fixed variables
         public override string StartPath => @"game\\bin\\win64\\cs2.exe"; // Game server start path
         public string FullName = "Counter Strike 2 Dedicated Server"; // Game server FullName
-        public bool AllowsEmbedConsole = false;  // Does this server support output redirect?
+        public bool AllowsEmbedConsole = true;  // Does this server support output redirect?
         public int PortIncrements = 1; // This tells WindowsGSM how many ports should skip after installation
         public object QueryMethod = new A2S(); // Query method should be use on current server type. Accepted value: null or new A2S() or new FIVEM() or new UT3()
 
@@ -71,28 +71,58 @@ namespace WindowsGSM.Plugins
 
             string param = "-dedicated";
 
+            param += $" {_serverData.ServerParam}";
             param += $" +hostname {_serverData.ServerName}";
             param += $" +map {_serverData.ServerMap}";
             param += $" -ip {_serverData.ServerIP}";
             param += $" -port {_serverData.ServerPort}";
             param += $" -maxplayers {_serverData.ServerMaxPlayer}";
-
-            param += $" {_serverData.ServerParam}";
             
 
             // Prepare Process
-            var p = new Process
+            Process p;
+            
+            if (!AllowsEmbedConsole)
             {
-                StartInfo =
+                p = new Process
                 {
-                    WorkingDirectory = ServerPath.GetServersServerFiles(_serverData.ServerID),
-                    FileName = shipExePath,
-                    Arguments = param.ToString(),
-                    WindowStyle = ProcessWindowStyle.Normal,
-                    UseShellExecute = false
-                },
-                EnableRaisingEvents = true
-            };
+                    StartInfo =
+                    {
+                        WorkingDirectory = ServerPath.GetServersServerFiles(_serverData.ServerID),
+                        FileName = shipExePath,
+                        Arguments = param.ToString(),
+                        WindowStyle = ProcessWindowStyle.Normal,
+                        UseShellExecute = false
+                    },
+                    EnableRaisingEvents = true
+                };
+            }
+            else
+            {
+                p = new Process
+                {
+                    StartInfo =
+                    {
+                        WorkingDirectory = ServerPath.GetServersServerFiles(_serverData.ServerID),
+                        FileName = shipExePath,
+                        Arguments = param.ToString(),
+                        WindowStyle = ProcessWindowStyle.Minimized,
+                        UseShellExecute = true,
+                        StandardOutputEncoding = Encoding.UTF8,
+                        StandardErrorEncoding = Encoding.UTF8,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    },
+                    EnableRaisingEvents = true
+                };
+
+                var serverConsole = new Functions.ServerConsole(serverData.ServerID);
+                p.OutputDataReceived += serverConsole.AddOutput;
+                p.ErrorDataReceived += serverConsole.AddOutput;
+                p.Start();
+                p.BeginOutputReadLine();
+                p.BeginErrorReadLine();
+            }
 
             // Start Process
             try
@@ -107,13 +137,23 @@ namespace WindowsGSM.Plugins
                 return null; // return null if fail to start
             }
         }
+
+        public async Task Stop(Process p)
+        {
+            await Task.Run(() => ServerConsole.SendMessageToMainWindow(p.MainWindowHandle, "quit"));
+        }
+
+        public async Task Restart(Process p)
+        {
+            await Stop(p);
+            await Start();
+        }
 		
         // - Update server function
         public async Task<Process> Update(bool validate = false, string custom = null)
         {
             var (p, error) = await Installer.SteamCMD.UpdateEx(_serverData.ServerID, AppId, validate, custom: custom, loginAnonymous: loginAnonymous);
             Error = error;
-            await Task.Run(() => { p.WaitForExit(); });
             return p;
         }
 
