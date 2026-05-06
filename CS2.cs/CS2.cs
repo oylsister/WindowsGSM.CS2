@@ -17,10 +17,10 @@ namespace WindowsGSM.Plugins
         public Plugin Plugin = new Plugin
         {
             name = "WindowsGSM.CS2", // WindowsGSM.XXXX
-            author = "ohmcodes",
+            author = "ohmcodes, Oylsister",
             description = "WindowsGSM plugin for supporting Counter Strike 2 Dedicated Server",
-            version = "2.1.1",
-            url = "https://github.com/ohmcodes/WindowsGSM.CS2", // Github repository link (Best practice)
+            version = "2.1.2",
+            url = "https://github.com/oylsister/WindowsGSM.CS2", // Github repository link (Best practice)
             color = "#FFA500" // Color Hex
         };
 
@@ -71,12 +71,13 @@ namespace WindowsGSM.Plugins
 
             string param = "-dedicated";
 
-            param += $" {_serverData.ServerParam}";
             param += $" +hostname {_serverData.ServerName}";
             param += $" +map {_serverData.ServerMap}";
             param += $" -ip {_serverData.ServerIP}";
             param += $" -port {_serverData.ServerPort}";
             param += $" -maxplayers {_serverData.ServerMaxPlayer}";
+
+            param += $" {_serverData.ServerParam}";
             
 
             // Prepare Process
@@ -107,7 +108,7 @@ namespace WindowsGSM.Plugins
                         FileName = shipExePath,
                         Arguments = param.ToString(),
                         WindowStyle = ProcessWindowStyle.Minimized,
-                        UseShellExecute = true,
+                        UseShellExecute = false,
                         StandardOutputEncoding = Encoding.UTF8,
                         StandardErrorEncoding = Encoding.UTF8,
                         RedirectStandardOutput = true,
