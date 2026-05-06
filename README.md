@@ -85,8 +85,10 @@ Directory ``` \game\csgo\cfg\server.cfg ```
 automation WIP
 
 # NOTE
-- Console Embed is not supported
-- Server Stop/Restart is not supported you have to manually type quit in the console (need to test but fixed)
+- ~~Console Embed is not supported~~ (Supported now)
+- ~~Server Stop/Restart is not supported you have to manually type quit in the console~~ (Fixed)
+- Update game server will no longer freezing.
+- If you use [Modsharp](https://github.com/Kxnrl/modsharp-public) and block CS2 console message, the server will think is not done boot up. This will cause Stop and Restart button become unavailable.
 - Install Steam Launcher if the server is not starting
 
 # License
